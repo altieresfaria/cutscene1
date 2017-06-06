@@ -1,34 +1,68 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class CutSceneController : MonoBehaviour {
+public class CutSceneController : MonoBehaviour
+{
+
     public static CutSceneController instancia = null;
 
-    public List<GameObject> cameras = new List<GameObject>();
-    int ativa;
+    public AudioClip musica;
 
-	void Start () {
-        if (instancia == null) {
+    public List<Camera> cameras = new List<Camera>();
+    List<Animator> anim = new List<Animator>();
+
+    int ativa;
+    AudioSource audioSource;
+
+    void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (instancia == null)
+        {
             instancia = this;
         }
-		for (int i=0; i<cameras.Count; i++)
+        else if (instancia != null)
         {
-            cameras[i].SetActive(false);
+            Destroy(gameObject);
         }
-        cameras[0].SetActive(true);
+        for (int i = 0; i < cameras.Count; i++)
+        {
+            anim.Add(cameras[i].GetComponent<Animator>());
+            desativarCamera(i);
+        }
         ativa = 0;
-	}
-	
-	public void ProximaCamera()
-    {
-        cameras[ativa].SetActive(false);
-        if(ativa < cameras.Count - 1)
-        {
-            ativa++;
-            cameras[ativa].SetActive(true);
-        }
-
+        ativarCamera(ativa);
+        audioSource.PlayOneShot(musica);
     }
 
+    void ativarCamera(int i)
+    {
+        cameras[i].depth = 1;
+        anim[i].SetTrigger("start");
+    }
 
+    void desativarCamera(int i)
+    {
+        cameras[i].depth = 0;
+    }
+
+    public void ProximaCamera()
+    {
+        Debug.Log("A");
+        if (ativa < cameras.Count - 1)
+        {
+            Debug.Log("B");
+            ativa++;
+            ativarCamera(ativa);
+            desativarCamera(ativa - 1);
+        }
+        else
+        {
+            Debug.Log("C");
+            desativarCamera(ativa);
+            audioSource.Stop();
+            GameController.instancia.TrFinishCutScene();
+            Destroy(this.gameObject);
+        }
+    }
 }
